@@ -19,8 +19,8 @@ class ClientThread(threading.Thread):
         self.csock.sendall(b'Hello client!\n')
 
         # get a message
-        msg = self.recv_until(self.csock, b"\n").decode('utf-8')
-        logging.info("Message: " + msg)
+        join_msg = self.recv_bytes(self.csock, len("Join")).decode('utf-8')
+        logging.info("Message: " + join_msg)
 
         # disconnect
         self.csock.close()
@@ -39,6 +39,10 @@ class ClientThread(threading.Thread):
             message += data
         return message
 
+    def recv_bytes(self, sock, num_bytes):
+        """Receive bytes over socket `sock` until we receive the `suffix`."""
+        message = sock.recv(num_bytes)
+        return message
 
 def server():
     # start serving (listening for clients)
