@@ -41,6 +41,28 @@ class ClientThread(threading.Thread):
         char_msg = self.recv_bytes(self.csock, len("X")).decode('utf-8')
         logging.info(f"Character chosen: {char_msg}")
 
+        client_char = char_msg
+
+        # set player
+        p1_char = engine.p1
+        if p1_char is None:
+            # your are p1 and you get your char
+            engine.p1 = char_msg
+        else:
+            # your are p2
+            # you may or may not get your char choice
+            if p1_char == "X":
+                engine.p2 = "O"
+                client_char = "O"
+            else:
+                engine.p2 = "X"
+                client_char = "X"
+        # update engine
+        self.q.put(engine)
+
+        # send back client_char
+        self.csock.sendall(bytes(client_char, 'utf-8'))
+
         # disconnect
         self.csock.close()
         logging.info('Disconnect client.')

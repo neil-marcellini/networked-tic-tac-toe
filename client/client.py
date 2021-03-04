@@ -43,6 +43,12 @@ def client(host,port):
         character = input("Please type X or O\n")
     # send character choice
     sock.send(bytes(character, 'utf-8'))
+    # get my character
+    my_char = sock.recv(len("X")).decode('utf-8')
+    if my_char == character:
+        logging.info(f"Your character is {my_char}")
+    else:
+        logging.info(f"The other player is using {character}, your character is {my_char}")
 
 
 
