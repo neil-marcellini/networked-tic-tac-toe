@@ -32,6 +32,21 @@ def client(host,port):
     sock.send(b"Join")
     join_msg = sock.recv(len("Joined")).decode('utf-8')
     logging.info(f"Join message: {join_msg}")
+    if join_msg == "ErrorS":
+        logging.info("Error, game already started. Try again later")
+        # quit
+        sock.close()
+    # ask user to enter their character
+    character = input("Please type X or O\n")
+    while character != "X" and character != "O":
+        print("Invalid character choice")
+        character = input("Please type X or O\n")
+    # send character choice
+    sock.send(bytes(character, 'utf-8'))
+
+
+
+
 
     # quit
     sock.close()

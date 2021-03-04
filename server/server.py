@@ -33,7 +33,13 @@ class ClientThread(threading.Thread):
         msg = b"Joined"
         if started:
             msg = b"ErrorS"
+            # disconnect
+            self.csock.close()
+            logging.info('Disconnect client.')
+
         self.csock.sendall(msg)
+        char_msg = self.recv_bytes(self.csock, len("X")).decode('utf-8')
+        logging.info(f"Character chosen: {char_msg}")
 
         # disconnect
         self.csock.close()
