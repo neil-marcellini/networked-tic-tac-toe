@@ -1,5 +1,6 @@
 class TicTacToeEngine:
     def __init__(self):
+        self.game_started = False
         # board is just a list of dashes for blanks. X and O's will fill it eventually.
         self.board = ['-','-','-','-','-','-','-','-','-']
         # is it x's turn?
@@ -70,17 +71,17 @@ class TicTacToeEngine:
 
 
 ttte = TicTacToeEngine()
-ttte.display_board()
-print(ttte.is_game_over())
-
-for i in range(0,9):
-    print('='*40)
-    ttte.make_move(i)
-    ttte.display_board()
-    winner = ttte.is_game_over()
-    if winner != '-':
-        print("Winner: " + winner)
-        break
-
-if winner == '-':
-    print("Tie.")
+#ttte.display_board()
+#print(ttte.is_game_over())
+#
+#for i in range(0,9):
+#    print('='*40)
+#    ttte.make_move(i)
+#    ttte.display_board()
+#    winner = ttte.is_game_over()
+#    if winner != '-':
+#        print("Winner: " + winner)
+#        break
+#
+#if winner == '-':
+#    print("Tie.")

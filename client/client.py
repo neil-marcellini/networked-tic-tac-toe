@@ -29,8 +29,9 @@ def client(host,port):
     logging.info('Message: ' + msg)
 
     # send Join command
-
     sock.send(b"Join")
+    join_msg = sock.recv(len("Joined")).decode('utf-8')
+    logging.info(f"Join message: {join_msg}")
 
     # quit
     sock.close()
