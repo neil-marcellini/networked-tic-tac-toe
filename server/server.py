@@ -43,10 +43,13 @@ class ClientThread(threading.Thread):
 
         client_char = char_msg
 
+        is_p1 = False
+
         # set player
         p1_char = engine.p1
         if p1_char is None:
-            # your are p1 and you get your char
+            # your are p1 and you get your char choice
+            is_p1 = True
             engine.p1 = char_msg
         else:
             # your are p2
@@ -57,15 +60,30 @@ class ClientThread(threading.Thread):
             else:
                 engine.p2 = "X"
                 client_char = "X"
+
+        # set game state
+        engine.game_started = engine.p1 is not None and engine.p2 is not None
+        
+        game_state = "W"
+        if engine.game_started:
+            if is_p1:
+                # p1 goes first
+                game_state = "G"
+            else:
+                game_state = "S"
+
+        char_setup = client_char + game_state
+
+
         # update engine
         self.q.put(engine)
 
         # send back client_char
-        self.csock.sendall(bytes(client_char, 'utf-8'))
+        self.csock.sendall(bytes(char_setup, 'utf-8'))
 
         # disconnect
-        self.csock.close()
-        logging.info('Disconnect client.')
+        #self.csock.close()
+        #logging.info('Disconnect client.')
 
 
     def recv_until(self, sock, suffix):

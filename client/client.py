@@ -1,5 +1,5 @@
 # client.py - a simple client
-
+import TTTEngine as ttt
 import argparse, socket, logging
 
 # Comment out the line below to not print the INFO messages
@@ -16,6 +16,7 @@ def recv_until(sock, suffix):
             raise IOError('received {!r} then socket closed'.format(message))
         message += data
     return message
+
 
 
 def client(host,port):
@@ -43,12 +44,49 @@ def client(host,port):
         character = input("Please type X or O\n")
     # send character choice
     sock.send(bytes(character, 'utf-8'))
-    # get my character
-    my_char = sock.recv(len("X")).decode('utf-8')
+    # receive character setup packet
+    char_setup = sock.recv(len("XS")).decode('utf-8')
+    logging.info(f"char_setup = {char_setup}")
+    my_char = char_setup[0]
     if my_char == character:
         logging.info(f"Your character is {my_char}")
     else:
         logging.info(f"The other player is using {character}, your character is {my_char}")
+
+    game_state = char_setup[1]
+    engine = ttt.TicTacToeEngine()
+    if game_state == "W" or "S":
+        logging.info("Waiting for the other players move")
+        # wait for game state message
+        state = sock.recv(9).decode('utf-8')
+
+    # make your first move
+    engine.display_board()
+    
+    # main gameplay loop
+    game_over = False
+    while not game_over:
+        move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right")
+        move_is_valid = len(move_input) == 1 and move_input.isnumeric()
+        while not move_is_valid:
+            print("Invalid move")
+            move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right")
+            move_is_valid = len(move_input) == 1 and move_input.isnumeric()
+        move = int(move_input)
+        engine.make_move(move)
+
+        board_msg = "".join(engine.board)
+        sock.send(bytes(board_msg, 'utf-8'))
+        print("Your move")
+        engine.display_board()
+        print("waiting for the other players move")
+        state = sock.recv(9).decode('utf-8')
+
+
+
+
+
+
 
 
 
