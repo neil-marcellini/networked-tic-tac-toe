@@ -55,10 +55,13 @@ def client(host,port):
 
     game_state = char_setup[1]
     engine = ttt.TicTacToeEngine()
-    if game_state == "W" or "S":
+    if game_state == "W" or game_state == "S":
         logging.info("Waiting for the other players move")
         # wait for game state message
         state = sock.recv(9).decode('utf-8')
+        # update board state
+        new_board = [char for char in state]
+        engine.board = new_board
 
     # make your first move
     engine.display_board()
@@ -66,31 +69,30 @@ def client(host,port):
     # main gameplay loop
     game_over = False
     while not game_over:
-        move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right")
+        move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right\n")
         move_is_valid = len(move_input) == 1 and move_input.isnumeric()
         while not move_is_valid:
             print("Invalid move")
-            move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right")
+            move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right\n")
             move_is_valid = len(move_input) == 1 and move_input.isnumeric()
         move = int(move_input)
-        engine.make_move(move)
-
+        engine.make_move(move, my_char)
         board_msg = "".join(engine.board)
         sock.send(bytes(board_msg, 'utf-8'))
         print("Your move")
         engine.display_board()
         print("waiting for the other players move")
         state = sock.recv(9).decode('utf-8')
+        if state.startswith("End"):
+            game_over = True
+            continue
+        # convert state into a list 
+        new_board = [char for char in state]
+        engine.board = new_board
+        print("The other player's move is:")
+        engine.display_board()
 
-
-
-
-
-
-
-
-
-
+    print("game over")
 
     # quit
     sock.close()

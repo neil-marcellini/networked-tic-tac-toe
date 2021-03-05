@@ -53,23 +53,27 @@ class TicTacToeEngine:
         return '-'
 
 
-    def make_move(self, pos):
+    def make_move(self, pos, char):
         # make a move if it is valid (between 0 and 8 inclusive)
         # increase number of turns by 1
-        # invert the x_turn boolean
+        # place char at that position on the board
         if self.is_move_valid(pos):
-            if self.x_turn:
-                self.board[pos] = 'X'
-            else:
-                self.board[pos] = 'O'
+            self.board[pos] = char
             self.turns += 1
-            self.x_turn = not self.x_turn
             return True
         return False
 
     def is_move_valid(self, pos):
         # make sure it is on the board and no one has already plkayed there!
         return (pos >= 0 and pos <= 8 and self.board[pos] == '-')
+    
+    def get_move_from(self, new_state):
+        new_board = [char for char in new_state]
+        # figure out what move was made based on the new board
+        for pos, character in enumerate(new_board):
+            if character != self.board[pos]:
+                return pos
+            
 
 
 ttte = TicTacToeEngine()

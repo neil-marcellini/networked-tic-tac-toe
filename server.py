@@ -40,11 +40,9 @@ class ClientThread(threading.Thread):
         self.csock.sendall(msg)
         char_msg = self.recv_bytes(self.csock, len("X")).decode('utf-8')
         logging.info(f"Character chosen: {char_msg}")
-
         client_char = char_msg
 
         is_p1 = False
-
         # set player
         p1_char = engine.p1
         if p1_char is None:
@@ -63,27 +61,73 @@ class ClientThread(threading.Thread):
 
         # set game state
         engine.game_started = engine.p1 is not None and engine.p2 is not None
-        
         game_state = "W"
         if engine.game_started:
-            if is_p1:
-                # p1 goes first
-                game_state = "G"
-            else:
-                game_state = "S"
-
+            game_state = "G"
         char_setup = client_char + game_state
-
-
         # update engine
         self.q.put(engine)
-
         # send back client_char
         self.csock.sendall(bytes(char_setup, 'utf-8'))
 
+        if game_state != "G":
+            # wait for updated engine from the other player
+            self.thread_cond.acquire()
+            self.thread_cond.wait()
+            self.q.get(engine)
+            # send the updated play to this client
+            game_state = "".join(engine.board)
+            self.csock.sendall(bytes(game_state, 'utf-8'))
+
+        while engine.is_game_over() == "-":
+            # get move from this client
+            client_play = self.recv_bytes(self.csock, 9).decode('utf-8')
+            # get the move based on board diff
+            move = engine.get_move_from(client_play)
+            valid_move = engine.make_move(move, client_char)
+            if not valid_move:
+                self.csock.sendall(b'ErrorI')
+                game_state = "".join(engine.board)
+                self.csock.sendall(bytes(game_state, 'utf-8'))
+                continue
+            # check for game over
+            if engine.is_game_over() != "-":
+                break
+            # send to other client and notify them
+            self.thread_cond.acquire()
+            self.q.put(engine)
+            self.thread_cond.notify()
+            # wait for updated engine from the other player
+            self.thread_cond.wait()
+            self.q.get(engine)
+            # check for game over
+            if engine.is_game_over() != "-":
+                break
+            # send to this client
+            game_state = "".join(engine.board)
+            self.csock.sendall(bytes(game_state, 'utf-8'))
+
+        # find out who won
+        winner = engine.is_game_over()
+        result = "L"
+        if winner == client_char:
+            result = "W"
+        elif winner == "T":
+            result = "T"
+        if result == "T":
+            winner = "-"
+
+        # send End packet
+        end_packet = f"End{result}{winner}"
+        self.csock.sendall(bytes(end_packet, 'utf-8'))
+
+        # send the end state to this client
+        game_state = "".join(engine.board)
+        self.csock.sendall(bytes(game_state, 'utf-8'))
+
         # disconnect
-        #self.csock.close()
-        #logging.info('Disconnect client.')
+        self.csock.close()
+        logging.info('Disconnect client.')
 
 
     def recv_until(self, sock, suffix):
