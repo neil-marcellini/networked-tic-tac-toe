@@ -74,7 +74,7 @@ class ClientThread(threading.Thread):
             # wait for updated engine from the other player
             self.thread_cond.acquire()
             self.thread_cond.wait()
-            self.q.get(engine)
+            engine = self.q.get()
             # send the updated play to this client
             game_state = "".join(engine.board)
             self.csock.sendall(bytes(game_state, 'utf-8'))
@@ -96,10 +96,13 @@ class ClientThread(threading.Thread):
             # send to other client and notify them
             self.thread_cond.acquire()
             self.q.put(engine)
+            print(f"thread {client_char} notifying opponent")
             self.thread_cond.notify()
             # wait for updated engine from the other player
+            print(f"thread {client_char} waiting for move")
             self.thread_cond.wait()
-            self.q.get(engine)
+            engine = self.q.get()
+            print(f"thread {client_char} got new engine")
             # check for game over
             if engine.is_game_over() != "-":
                 break
@@ -118,12 +121,22 @@ class ClientThread(threading.Thread):
             winner = "-"
 
         # send End packet
+        print(f"thread {client_char} sending end packet")
         end_packet = f"End{result}{winner}"
         self.csock.sendall(bytes(end_packet, 'utf-8'))
 
         # send the end state to this client
+        print(f"thread {client_char} sending end state")
         game_state = "".join(engine.board)
         self.csock.sendall(bytes(game_state, 'utf-8'))
+
+        # send to other client and notify them
+        self.thread_cond.acquire()
+        self.q.put(engine)
+        print(f"thread {client_char} notifying opponent")
+        self.thread_cond.notify()
+        print(f"thread {client_char} short wait ")
+        self.thread_cond.wait(2)
 
         # disconnect
         self.csock.close()
