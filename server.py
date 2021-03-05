@@ -112,17 +112,9 @@ class ClientThread(threading.Thread):
 
         # find out who won
         winner = engine.is_game_over()
-        result = "L"
-        if winner == client_char:
-            result = "W"
-        elif winner == "T":
-            result = "T"
-        if result == "T":
-            winner = "-"
-
         # send End packet
         print(f"thread {client_char} sending end packet")
-        end_packet = f"End{result}{winner}"
+        end_packet = f"End{winner}"
         self.csock.sendall(bytes(end_packet, 'utf-8'))
 
         # send the end state to this client

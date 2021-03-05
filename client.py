@@ -68,6 +68,8 @@ def client(host,port):
     
     # main gameplay loop
     game_over = False
+    winner = None
+    final_move = False
     while not game_over:
         move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right\n")
         move_is_valid = len(move_input) == 1 and move_input.isnumeric()
@@ -81,18 +83,34 @@ def client(host,port):
         sock.send(bytes(board_msg, 'utf-8'))
         print("Your move")
         engine.display_board()
-        print("waiting for the other players move")
+        if engine.is_game_over() == "-":
+            # game not over, get the next move
+            print("waiting for the other players move")
+        else:
+            # game will be over
+            final_move = True
         state = sock.recv(9).decode('utf-8')
         if state.startswith("End"):
             game_over = True
-            continue
+            winner = state[3]
+            if final_move:
+                # go straight to results
+                break
+            else:
+                # get end game state if you didn't make the last move
+                state = sock.recv(9).decode('utf-8')
         # convert state into a list 
         new_board = [char for char in state]
         engine.board = new_board
         print("The other player's move is:")
         engine.display_board()
 
-    print("game over")
+    if winner == my_char:
+        print("You won!")
+    elif winner == "T":
+        print("It's a tie.")
+    else:
+        print("Sorry, you lost")
 
     # quit
     sock.close()
