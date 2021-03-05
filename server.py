@@ -59,6 +59,8 @@ class ClientThread(threading.Thread):
                 engine.p2 = "X"
                 client_char = "X"
 
+        acquire_count = 0
+
         # set game state
         engine.game_started = engine.p1 is not None and engine.p2 is not None
         game_state = "W"
@@ -73,12 +75,14 @@ class ClientThread(threading.Thread):
         if game_state != "G":
             # wait for updated engine from the other player
             self.thread_cond.acquire()
+            acquire_count += 1
             self.thread_cond.wait()
             engine = self.q.get()
             # send the updated play to this client
             game_state = "".join(engine.board)
             self.csock.sendall(bytes(game_state, 'utf-8'))
 
+        last_move = False
         while engine.is_game_over() == "-":
             # get move from this client
             client_play = self.recv_bytes(self.csock, 9).decode('utf-8')
@@ -92,9 +96,11 @@ class ClientThread(threading.Thread):
                 continue
             # check for game over
             if engine.is_game_over() != "-":
+                last_move = True
                 break
             # send to other client and notify them
             self.thread_cond.acquire()
+            acquire_count += 1
             self.q.put(engine)
             print(f"thread {client_char} notifying opponent")
             self.thread_cond.notify()
@@ -103,6 +109,7 @@ class ClientThread(threading.Thread):
             self.thread_cond.wait()
             engine = self.q.get()
             print(f"thread {client_char} got new engine")
+            print(f"thread {client_char} new board = {engine.board}")
             # check for game over
             if engine.is_game_over() != "-":
                 break
@@ -114,7 +121,7 @@ class ClientThread(threading.Thread):
         winner = engine.is_game_over()
         # send End packet
         print(f"thread {client_char} sending end packet")
-        end_packet = f"End{winner}"
+        end_packet = f"End{winner}-----"
         self.csock.sendall(bytes(end_packet, 'utf-8'))
 
         # send the end state to this client
@@ -122,17 +129,21 @@ class ClientThread(threading.Thread):
         game_state = "".join(engine.board)
         self.csock.sendall(bytes(game_state, 'utf-8'))
 
-        # send to other client and notify them
-        self.thread_cond.acquire()
-        self.q.put(engine)
-        print(f"thread {client_char} notifying opponent")
-        self.thread_cond.notify()
-        print(f"thread {client_char} short wait ")
-        self.thread_cond.wait(2)
+        if last_move:
+            # send to other client and notify them
+            self.thread_cond.acquire()
+            acquire_count += 1
+            self.q.put(engine)
+            print(f"thread {client_char} board sent = {engine.board}")
+            print(f"thread {client_char} notifying opponent")
+            self.thread_cond.notify()
+            # release this thread completely
+            for i in range(acquire_count):
+                self.thread_cond.release()
 
         # disconnect
         self.csock.close()
-        logging.info('Disconnect client.')
+        logging.info(f'thread {client_char} disconnect client.')
 
 
     def recv_until(self, sock, suffix):

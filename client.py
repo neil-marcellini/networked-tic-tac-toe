@@ -27,14 +27,13 @@ def client(host,port):
     logging.info('Connect to server: ' + host + ' on port: ' + str(port))
 
     msg = recv_until(sock, b"\n").decode('utf-8')
-    logging.info('Message: ' + msg)
 
     # send Join command
     sock.send(b"Join")
     join_msg = sock.recv(len("Joined")).decode('utf-8')
-    logging.info(f"Join message: {join_msg}")
+    print(join_msg)
     if join_msg == "ErrorS":
-        logging.info("Error, game already started. Try again later")
+        print("Game already started. Try again later.")
         # quit
         sock.close()
     # ask user to enter their character
@@ -46,17 +45,16 @@ def client(host,port):
     sock.send(bytes(character, 'utf-8'))
     # receive character setup packet
     char_setup = sock.recv(len("XS")).decode('utf-8')
-    logging.info(f"char_setup = {char_setup}")
     my_char = char_setup[0]
     if my_char == character:
-        logging.info(f"Your character is {my_char}")
+        print(f"Your character is {my_char}")
     else:
-        logging.info(f"The other player is using {character}, your character is {my_char}")
+        print(f"The other player is using {character}, your character is {my_char}")
 
     game_state = char_setup[1]
     engine = ttt.TicTacToeEngine()
     if game_state == "W" or game_state == "S":
-        logging.info("Waiting for the other players move")
+        print("Waiting for the other player's move.")
         # wait for game state message
         state = sock.recv(9).decode('utf-8')
         # update board state
@@ -71,21 +69,21 @@ def client(host,port):
     winner = None
     final_move = False
     while not game_over:
-        move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right\n")
+        move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right.\n")
         move_is_valid = len(move_input) == 1 and move_input.isnumeric()
         while not move_is_valid:
             print("Invalid move")
-            move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right\n")
+            move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right.\n")
             move_is_valid = len(move_input) == 1 and move_input.isnumeric()
         move = int(move_input)
         engine.make_move(move, my_char)
         board_msg = "".join(engine.board)
         sock.send(bytes(board_msg, 'utf-8'))
-        print("Your move")
+        print("Your move:")
         engine.display_board()
         if engine.is_game_over() == "-":
             # game not over, get the next move
-            print("waiting for the other players move")
+            print("Waiting for the other player's move.")
         else:
             # game will be over
             final_move = True
@@ -110,7 +108,7 @@ def client(host,port):
     elif winner == "T":
         print("It's a tie.")
     else:
-        print("Sorry, you lost")
+        print("Sorry, you lost.")
 
     # quit
     sock.close()
