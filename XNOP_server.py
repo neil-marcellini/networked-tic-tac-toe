@@ -1,4 +1,7 @@
-# server.py - a simple threaded server
+# Neil Marcellini
+# 3/5/21
+# COMP 429
+# A server implementing XNOP
 
 import TTTEngine as ttt
 from queue import Queue
@@ -144,6 +147,9 @@ class ClientThread(threading.Thread):
             print(f"thread {client_char} notifying opponent")
             self.thread_cond.notify()
             # release this thread completely
+            # release must be called as many times as it was aquired
+            # when using RLocks
+            # https://docs.python.org/3/library/threading.html#threading.RLock.release
             for i in range(acquire_count):
                 self.thread_cond.release()
 
@@ -181,6 +187,7 @@ def server():
 
     # game state
     engine = ttt.TicTacToeEngine()
+    # use a shared queue for inter-thread communication
     q = Queue()
 
     while True:

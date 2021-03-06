@@ -1,4 +1,7 @@
-# client.py - a simple client
+# Neil Marcellini
+# 3/5/21
+# COMP 429
+# A client for XNOP
 import TTTEngine as ttt
 import argparse, socket, logging
 
@@ -18,6 +21,8 @@ def recv_until(sock, suffix):
     return message
 
 def validate_move(move_input, engine):
+    # insure that a move_input is in the proper format
+    # and that it is valid with the engine
     valid_input = len(move_input) == 1 and move_input.isnumeric()
     valid_move = False
     if valid_input:
@@ -68,7 +73,6 @@ def client(host,port):
         new_board = [char for char in state]
         engine.board = new_board
 
-    # make your first move
     engine.display_board()
     
     # main gameplay loop
@@ -84,6 +88,7 @@ def client(host,port):
             valid_move = validate_move(move_input, engine)
         move = int(move_input)
         engine.make_move(move, my_char)
+        # make the new board into a state packet
         board_msg = "".join(engine.board)
         sock.send(bytes(board_msg, 'utf-8'))
         print("Your move:")
@@ -96,6 +101,7 @@ def client(host,port):
             final_move = True
         state = sock.recv(9).decode('utf-8')
         if state.startswith("End"):
+            # received an end packet
             game_over = True
             winner = state[3]
             if final_move:
@@ -104,12 +110,13 @@ def client(host,port):
             else:
                 # get end game state if you didn't make the last move
                 state = sock.recv(9).decode('utf-8')
-        # convert state into a list 
+        # convert state into a board 
         new_board = [char for char in state]
         engine.board = new_board
         print("The other player's move is:")
         engine.display_board()
 
+    # show the winner
     if winner == my_char:
         print("You won!")
     elif winner == "T":

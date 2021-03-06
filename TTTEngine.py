@@ -1,3 +1,8 @@
+# Modified by Neil Marcellini
+# 3/5/21
+# Created by Kevin Scrivnor
+# COMP 429
+
 class TicTacToeEngine:
     def __init__(self):
         self.game_started = False
