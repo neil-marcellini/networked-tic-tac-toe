@@ -26,8 +26,13 @@ class ClientThread(threading.Thread):
         join_msg = self.recv_bytes(self.csock, len("Join")).decode('utf-8')
         logging.info("Message: " + join_msg)
 
-        # check if game has started
         engine = self.q.get()
+
+        # if the game is over, restart the engine
+        if engine.game_ended:
+            engine.restart()
+
+        # check if game has started
         started = engine.game_started
         logging.info(f"game_started = {started}")
         msg = b"Joined"
@@ -133,6 +138,7 @@ class ClientThread(threading.Thread):
             # send to other client and notify them
             self.thread_cond.acquire()
             acquire_count += 1
+            engine.game_ended = True
             self.q.put(engine)
             print(f"thread {client_char} board sent = {engine.board}")
             print(f"thread {client_char} notifying opponent")

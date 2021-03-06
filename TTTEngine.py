@@ -1,6 +1,7 @@
 class TicTacToeEngine:
     def __init__(self):
         self.game_started = False
+        self.game_ended = False
         self.p1 = None
         self.p2 = None
         # board is just a list of dashes for blanks. X and O's will fill it eventually.
@@ -15,6 +16,10 @@ class TicTacToeEngine:
         self.board = ['-','-','-','-','-','-','-','-','-']
         self.x_turn = True
         self.turns = 0
+        self.game_ended = False
+        self.game_started = False
+        self.p1 = None
+        self.p2 = None
 
 
     def display_board(self):
