@@ -69,7 +69,7 @@ class TicTacToeEngine:
         return False
 
     def is_move_valid(self, pos):
-        # make sure it is on the board and no one has already plkayed there!
+        # make sure it is on the board and no one has already played there!
         return (pos >= 0 and pos <= 8 and self.board[pos] == '-')
     
     def get_move_from(self, new_state):

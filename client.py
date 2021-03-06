@@ -17,6 +17,12 @@ def recv_until(sock, suffix):
         message += data
     return message
 
+def validate_move(move_input, engine):
+    valid_input = len(move_input) == 1 and move_input.isnumeric()
+    valid_move = False
+    if valid_input:
+        valid_move = engine.is_move_valid(int(move_input))
+    return valid_move
 
 
 def client(host,port):
@@ -70,11 +76,11 @@ def client(host,port):
     final_move = False
     while not game_over:
         move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right.\n")
-        move_is_valid = len(move_input) == 1 and move_input.isnumeric()
-        while not move_is_valid:
-            print("Invalid move")
+        valid_move = validate_move(move_input, engine)
+        while not valid_move:
+            print("Invalid move!")
             move_input = input("Enter the position between 0 and 8 where you want to play. Top left to bottom right.\n")
-            move_is_valid = len(move_input) == 1 and move_input.isnumeric()
+            valid_move = validate_move(move_input, engine)
         move = int(move_input)
         engine.make_move(move, my_char)
         board_msg = "".join(engine.board)

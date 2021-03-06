@@ -81,8 +81,11 @@ class ClientThread(threading.Thread):
             # wait for updated engine from the other player
             self.thread_cond.acquire()
             acquire_count += 1
+            print(f"thread {client_char} waiting for move")
             self.thread_cond.wait()
             engine = self.q.get()
+            print(f"thread {client_char} got new engine")
+            print(f"thread {client_char} new board = {engine.board}")
             # send the updated play to this client
             game_state = "".join(engine.board)
             self.csock.sendall(bytes(game_state, 'utf-8'))
@@ -93,12 +96,7 @@ class ClientThread(threading.Thread):
             client_play = self.recv_bytes(self.csock, 9).decode('utf-8')
             # get the move based on board diff
             move = engine.get_move_from(client_play)
-            valid_move = engine.make_move(move, client_char)
-            if not valid_move:
-                self.csock.sendall(b'ErrorI')
-                game_state = "".join(engine.board)
-                self.csock.sendall(bytes(game_state, 'utf-8'))
-                continue
+            engine.make_move(move, client_char)
             # check for game over
             if engine.is_game_over() != "-":
                 last_move = True
