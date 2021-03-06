@@ -38,9 +38,11 @@ class ClientThread(threading.Thread):
         msg = b"Joined"
         if started:
             msg = b"ErrorS"
+            self.csock.sendall(msg)
             # disconnect
             self.csock.close()
-            logging.info('Disconnect client.')
+            logging.info(f'Game started, disconnecting other client.')
+            return
 
         self.csock.sendall(msg)
         char_msg = self.recv_bytes(self.csock, len("X")).decode('utf-8')

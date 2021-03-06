@@ -42,6 +42,7 @@ def client(host,port):
         print("Game already started. Try again later.")
         # quit
         sock.close()
+        return
     # ask user to enter their character
     character = input("Please type X or O\n")
     while character != "X" and character != "O":
